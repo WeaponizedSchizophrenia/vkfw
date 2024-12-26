@@ -3073,8 +3073,7 @@ namespace VKFW_NAMESPACE {
     VkSurfaceKHR output;
     glfwCreateWindowSurface(instance, window, allocator, &output);
 
-    vk::ObjectDestroy<vk::Instance, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> deleter(instance, nullptr);
-    return vk::UniqueSurfaceKHR(output, deleter);
+    return vk::UniqueSurfaceKHR(output, {instance, nullptr});
   }
     #endif
   #endif
