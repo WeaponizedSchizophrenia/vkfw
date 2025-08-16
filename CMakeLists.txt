@@ -7,8 +7,8 @@ cmake_minimum_required(VERSION 3.20...3.30)
 # so CppModules/CMakeLists.txt forces CMake 3.30 or later.
 option(VKFW_BUILD_CXX_MODULE "Add a C++ module target for vkfw" OFF)
 if(VKFW_BUILD_CXX_MODULE)
-    # This line must be before any call to `project()`
-    set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
+  # This line must be before any call to `project()`
+  set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
         "d0edc3af-4c50-42ea-a356-e2862fe7a444"
     )
 endif()
@@ -16,6 +16,7 @@ endif()
 project(vkfw LANGUAGES CXX)
 
 # Build options.
+option(VKFW_VERIFY_DEPENDENCIES "Verify build dependencies" ON)
 option(VKFW_FETCH_DEPENDENCIES "Fetch build dependencies" OFF)
 option(VKFW_INSTALL "Create install target" OFF)
 option(VKFW_BUILD_EXAMPLES "Build examples" OFF)
@@ -41,13 +42,14 @@ set(VKFW_SOURCE_ROOT ${VKFW_SOURCE_DIR}/include)
 set(VKFW_EXAMPLE_ROOT ${VKFW_SOURCE_DIR}/example)
 set(VKFW_DEPS_ROOT ${VKFW_SOURCE_DIR}/deps)
 
-# This is the version of GLFW that will be fetched if either
-# VKFW_FETCH_DEPENDENCIES or VKFW_BUILD_EXAMPLES is set.
-# See ./example/CMakeLists.txt for details.
-set(VKFW_GLFW_FETCH_VERSION 3.4)
+if(VKFW_VERIFY_DEPENDENCIES)
+  # This is the version of GLFW that will be fetched if either
+  # VKFW_FETCH_DEPENDENCIES or VKFW_BUILD_EXAMPLES is set.
+  # See ./example/CMakeLists.txt for details.
+  set(VKFW_GLFW_FETCH_VERSION 3.4)
 
-find_package(glfw3 QUIET)
-if(NOT glfw3_FOUND AND VKFW_FETCH_DEPENDENCIES)
+  find_package(glfw3 QUIET)
+  if(NOT glfw3_FOUND AND VKFW_FETCH_DEPENDENCIES)
     include(FetchContent)
     FetchContent_Declare(
         glfw3
@@ -55,8 +57,9 @@ if(NOT glfw3_FOUND AND VKFW_FETCH_DEPENDENCIES)
         GIT_TAG ${VKFW_GLFW_FETCH_VERSION}
     )
     FetchContent_MakeAvailable(glfw3)
-elseif(NOT glfw3_FOUND)
+  elseif(NOT glfw3_FOUND)
     message(ERROR " Unable to find GLFW")
+  endif()
 endif()
 
 add_library(vkfw INTERFACE)
@@ -69,9 +72,9 @@ target_include_directories(
 target_link_libraries(vkfw INTERFACE glfw)
 
 function(add_definitions OPTION_NAME)
-    if("${${OPTION_NAME}}")
-        target_compile_definitions(vkfw INTERFACE "${OPTION_NAME}")
-    endif()
+  if("${${OPTION_NAME}}")
+    target_compile_definitions(vkfw INTERFACE "${OPTION_NAME}")
+  endif()
 endfunction()
 
 # Set options. See README.md for the full list.
@@ -91,41 +94,41 @@ add_definitions(VKFW_NO_STRING_VIEW)
 add_definitions(VKFW_NO_SPAN)
 
 if(VKFW_BUILD_CXX_MODULE)
-    add_subdirectory(CppModule)
+  add_subdirectory(CppModule)
 endif()
 
 if(VKFW_INSTALL)
-    include(CMakePackageConfigHelpers)
-    include(GNUInstallDirs)
+  include(CMakePackageConfigHelpers)
+  include(GNUInstallDirs)
 
-    install(
+  install(
         TARGETS vkfw
         EXPORT vkfw
         LIBRARY DESTINATION lib
         INCLUDES DESTINATION include
     )
 
-    install(
+  install(
         EXPORT vkfw
         FILE vkfwTargets.cmake
         NAMESPACE vkfw::
         DESTINATION lib/cmake/vkfw
     )
 
-    install(
+  install(
         FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/vkfwConfig.cmake"
         DESTINATION lib/cmake/vkfw
     )
 
-    set(VKFW_INSTALL_HEADERS ${VKFW_SOURCE_ROOT}/vkfw/vkfw.hpp)
-    set(VKFW_INSTALL_MODULES ${VKFW_SOURCE_ROOT}/vkfw/vkfw.cppm)
+  set(VKFW_INSTALL_HEADERS ${VKFW_SOURCE_ROOT}/vkfw/vkfw.hpp)
+  set(VKFW_INSTALL_MODULES ${VKFW_SOURCE_ROOT}/vkfw/vkfw.cppm)
 
-    install(
+  install(
         FILES ${VKFW_INSTALL_HEADERS} ${VKFW_INSTALL_MODULES}
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/vkfw"
     )
 endif()
 
 if(VKFW_BUILD_EXAMPLES)
-    add_subdirectory(${VKFW_EXAMPLE_ROOT})
+  add_subdirectory(${VKFW_EXAMPLE_ROOT})
 endif()
